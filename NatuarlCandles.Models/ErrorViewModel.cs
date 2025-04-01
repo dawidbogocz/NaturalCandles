@@ -1,4 +1,4 @@
-namespace NaturalCandles.Models
+namespace NatuarlCandles.Models
 {
     public class ErrorViewModel
     {
