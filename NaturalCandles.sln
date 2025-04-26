@@ -5,6 +5,12 @@ VisualStudioVersion = 17.9.34607.119
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NaturalCandles", "NaturalCandles\NaturalCandles.csproj", "{4ABB4FA7-AA8C-43B3-A926-C8776CE3B374}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NaturalCandles.Models", "NaturalCandles.Models\NaturalCandles.Models.csproj", "{E16B4BE9-5747-46A9-AC4F-F817BEBCA5A8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NaturalCandles.Utility", "NaturalCandles.Utility\NaturalCandles.Utility.csproj", "{B71AE91F-7669-4992-AC31-F5EA3E976E7D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NaturalCandles.DataAccess", "NaturalCandles.DataAccess\NaturalCandles.DataAccess.csproj", "{63351CD8-1694-4B23-9391-CF9E89A4F385}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +21,18 @@ Global
 		{4ABB4FA7-AA8C-43B3-A926-C8776CE3B374}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4ABB4FA7-AA8C-43B3-A926-C8776CE3B374}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4ABB4FA7-AA8C-43B3-A926-C8776CE3B374}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E16B4BE9-5747-46A9-AC4F-F817BEBCA5A8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E16B4BE9-5747-46A9-AC4F-F817BEBCA5A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E16B4BE9-5747-46A9-AC4F-F817BEBCA5A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E16B4BE9-5747-46A9-AC4F-F817BEBCA5A8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B71AE91F-7669-4992-AC31-F5EA3E976E7D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B71AE91F-7669-4992-AC31-F5EA3E976E7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B71AE91F-7669-4992-AC31-F5EA3E976E7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B71AE91F-7669-4992-AC31-F5EA3E976E7D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{63351CD8-1694-4B23-9391-CF9E89A4F385}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{63351CD8-1694-4B23-9391-CF9E89A4F385}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{63351CD8-1694-4B23-9391-CF9E89A4F385}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{63351CD8-1694-4B23-9391-CF9E89A4F385}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
