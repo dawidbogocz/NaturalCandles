@@ -12,7 +12,7 @@ using NaturalCandles.DataAccess.Data;
 namespace NaturalCandles.DataAccess.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250426141801_InitialDbStructure")]
+    [Migration("20250429150156_InitialDbStructure")]
     partial class InitialDbStructure
     {
         /// <inheritdoc />
@@ -105,10 +105,12 @@ namespace NaturalCandles.DataAccess.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
                     b.Property<string>("LoginProvider")
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<string>("ProviderKey")
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<string>("ProviderDisplayName")
                         .HasColumnType("nvarchar(max)");
@@ -145,10 +147,12 @@ namespace NaturalCandles.DataAccess.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("LoginProvider")
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<string>("Name")
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<string>("Value")
                         .HasColumnType("nvarchar(max)");
@@ -225,6 +229,26 @@ namespace NaturalCandles.DataAccess.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("NaturalCandles.Models.Category", b =>
+                {
+                    b.Property<int>("CategoryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CategoryId"));
+
+                    b.Property<int>("CategoryType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("CategoryId");
+
+                    b.ToTable("Categories");
                 });
 
             modelBuilder.Entity("NaturalCandles.Models.Order", b =>
@@ -355,6 +379,9 @@ namespace NaturalCandles.DataAccess.Migrations
                     b.Property<int>("Category")
                         .HasColumnType("int");
 
+                    b.Property<int?>("CategoryId")
+                        .HasColumnType("int");
+
                     b.Property<bool>("HasColorOption")
                         .HasColumnType("bit");
 
@@ -369,6 +396,8 @@ namespace NaturalCandles.DataAccess.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("ProductId");
+
+                    b.HasIndex("CategoryId");
 
                     b.ToTable("Products");
                 });
@@ -465,9 +494,21 @@ namespace NaturalCandles.DataAccess.Migrations
                     b.Navigation("Order");
                 });
 
+            modelBuilder.Entity("NaturalCandles.Models.Product", b =>
+                {
+                    b.HasOne("NaturalCandles.Models.Category", null)
+                        .WithMany("Products")
+                        .HasForeignKey("CategoryId");
+                });
+
             modelBuilder.Entity("NaturalCandles.Models.ApplicationUser", b =>
                 {
                     b.Navigation("Orders");
+                });
+
+            modelBuilder.Entity("NaturalCandles.Models.Category", b =>
+                {
+                    b.Navigation("Products");
                 });
 
             modelBuilder.Entity("NaturalCandles.Models.Order", b =>
