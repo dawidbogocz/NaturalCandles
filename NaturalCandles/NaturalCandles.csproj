@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="Views\Category\Create.cshtml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.15" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.15" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.15" />
@@ -27,6 +31,18 @@
     <ProjectReference Include="..\NaturalCandles.DataAccess\NaturalCandles.DataAccess.csproj" />
     <ProjectReference Include="..\NaturalCandles.Models\NaturalCandles.Models.csproj" />
     <ProjectReference Include="..\NaturalCandles.Utility\NaturalCandles.Utility.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <UpToDateCheckInput Remove="Views\Category\Create.cshtml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="Views\Category\Create.cshtml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Views\Category\Create.cshtml" />
   </ItemGroup>
 
 </Project>
