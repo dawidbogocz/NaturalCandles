@@ -1,6 +1,5 @@
 ﻿@model List<Category>
-
-	<div class="container">
+<div class="container">
 		<div class="row pt-4 pb-2">
 			<div class="col-6">
 				<h2 class="text-primary">
@@ -9,7 +8,7 @@
 			</div>
 			<div class="col-6 text-end">
 				<a asp-controller="Category" asp-action="Create" class="btn btn-primary">
-					<i class="bi bi-plus-circle"></i> Stwórz nową kategorie
+					<i class="bi bi-plus-circle"></i> Create new Category
 				</a>
 			</div>
 		</div>
@@ -20,12 +19,18 @@
 			Category Name
 		</th>
 		<th>
-			Products
+			Product
+		</th>
+		<th>
+			CategoryType
+		</th>
+		<th>
+
 		</th>
 	</tr>
 	</thead>
 	<tbody>
-	@foreach (var obj in Model.OrderBy(u=>u.Products))
+		@foreach (var obj in Model.OrderBy(u => u.CategoryType))
 	{
 		<tr>
 			<td>
@@ -33,6 +38,20 @@
 			</td>
 			<td>
 				@obj.Products
+			</td>
+			<td>
+				@obj.CategoryType
+			</td>
+			<td>
+				<div class="w-75 btn-group" role="group">
+					<a asp-controller="Category" asp-action="Edit" asp-route-id="@obj.CategoryId" class="btn btn-primary" mx-2>
+						<i class="bi bi-pencil-square"> Edit</i>
+					</a>
+						<a asp-controller="Category" asp-action="Delete" asp-route-id="@obj.CategoryId" class="btn btn-danger" mx-2>
+							<i class="bi bi-trash"> Delete</i>
+						</a>
+							
+				</div>
 			</td>
 		</tr>
 	}

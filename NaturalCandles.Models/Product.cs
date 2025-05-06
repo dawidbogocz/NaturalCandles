@@ -15,7 +15,7 @@ namespace NaturalCandles.Models
         [Required]
         public string Name { get; set; }
 
-        public ProductCategory Category { get; set; }
+        public ProductCategory CategoryType { get; set; }
 
         [Required]
         public decimal BasePrice { get; set; }

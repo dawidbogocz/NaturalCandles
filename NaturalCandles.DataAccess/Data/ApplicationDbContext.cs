@@ -20,11 +20,11 @@ namespace NaturalCandles.DataAccess.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(modelBuilder); // Needed for Identity tables
+            base.OnModelCreating(modelBuilder);
+			// Needed for Identity tables
+			// Optional: Fluent API configurations if you want fine control
 
-            // Optional: Fluent API configurations if you want fine control
-
-            modelBuilder.Entity<Product>()
+			modelBuilder.Entity<Product>()
                 .Property(p => p.BasePrice)
                 .HasColumnType("decimal(18,2)");
 
