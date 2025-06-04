@@ -2,8 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using NaturalCandles.Models;
 using System.Diagnostics;
 
-namespace NaturalCandles.Controllers
+namespace NaturalCandles.Areas.Customer.Controllers
 {
+    [Area("Customer")]
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NaturalCandles.DataAccess.Data;
 
@@ -11,9 +12,11 @@ using NaturalCandles.DataAccess.Data;
 namespace NaturalCandles.DataAccess.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250509102352_RemovedCategoryType")]
+    partial class RemovedCategoryType
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -230,11 +233,18 @@ namespace NaturalCandles.DataAccess.Migrations
 
             modelBuilder.Entity("NaturalCandles.Models.Category", b =>
                 {
-                    b.Property<string>("CategoryName")
+                    b.Property<int>("CategoryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CategoryId"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.HasKey("CategoryName");
+                    b.HasKey("CategoryId");
 
                     b.ToTable("Categories");
                 });
@@ -364,13 +374,8 @@ namespace NaturalCandles.DataAccess.Migrations
                     b.Property<decimal>("BasePrice")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<string>("CategoryName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
 
                     b.Property<bool>("HasColorOption")
                         .HasColumnType("bit");
@@ -381,23 +386,13 @@ namespace NaturalCandles.DataAccess.Migrations
                     b.Property<bool>("HasTypeOption")
                         .HasColumnType("bit");
 
-                    b.Property<string>("ImageUrl")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal>("Price10")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("Price4")
-                        .HasColumnType("decimal(18,2)");
-
                     b.HasKey("ProductId");
 
-                    b.HasIndex("CategoryName");
+                    b.HasIndex("CategoryId");
 
                     b.ToTable("Products");
                 });
@@ -498,7 +493,7 @@ namespace NaturalCandles.DataAccess.Migrations
                 {
                     b.HasOne("NaturalCandles.Models.Category", "Category")
                         .WithMany("Products")
-                        .HasForeignKey("CategoryName")
+                        .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

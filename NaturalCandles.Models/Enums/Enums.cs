@@ -6,14 +6,6 @@ using System.Threading.Tasks;
 
 namespace NaturalCandles.Models.Enums
 {
-    public enum ProductCategory
-    {
-        AvailableNow,
-        DecorativeCandles,
-        FlowerBoxes,
-        Bouquets,
-        CandleDecorations
-    }
 
     public enum CandleColor
     {
