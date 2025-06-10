@@ -1,14 +1,17 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using NaturalCandles.DataAccess.Data;
 using NaturalCandles.DataAccess.Repository.IRepository;
 using NaturalCandles.Models;
 using NaturalCandles.Models.ViewModels;
+using NaturalCandles.Utility;
 using System.Collections.Generic;
 
 namespace NaturalCandles.Areas.Admin.Controllers
 {
     [Area("Admin")]
+    [Authorize(Roles = SD.Role_Admin)]
     public class ProductController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -102,7 +105,7 @@ namespace NaturalCandles.Areas.Admin.Controllers
 			}
         }
       
-        #region APICALLS
+        #region API CALLS
         [HttpGet]
         public IActionResult GetAll()
         {
