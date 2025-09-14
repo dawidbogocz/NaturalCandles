@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using NaturalCandles.DataAccess.Data;
 using NaturalCandles.DataAccess.Repository.IRepository;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace NaturalCandles.DataAccess.Repository
 {
@@ -36,25 +37,38 @@ namespace NaturalCandles.DataAccess.Repository
 			dbSet.RemoveRange(entity);
 		}
 
-		public T Get(Expression<Func<T, bool>> fliter, string? includeProperties = null)
+		public T Get(Expression<Func<T, bool>> filter, string? includeProperties = null, bool tracked = false)
 		{
-			IQueryable<T> query = dbSet;
-			query = query.Where(fliter);
-			if (!string.IsNullOrEmpty(includeProperties))
-			{
-				foreach (var includeProp in includeProperties
-					.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
-				{
-					query = query.Include(includeProp);
-				}
-			}
-			return query.FirstOrDefault();
-		}
+			IQueryable<T> query;
 
-		public IEnumerable<T> GetAll(string? includeProperties = null)
+            if (tracked)
+			{
+				query = dbSet;
+
+			}
+			else
+			{
+                query = dbSet.AsNoTracking();
+            }
+            query = query.Where(filter);
+            if (!string.IsNullOrEmpty(includeProperties))
+            {
+                foreach (var includeProp in includeProperties
+                    .Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    query = query.Include(includeProp);
+                }
+            }
+            return query.FirstOrDefault();
+        }
+
+		public IEnumerable<T> GetAll(Expression<Func<T, bool>>? filter, string? includeProperties = null)
 		{
 			IQueryable<T> query = dbSet;
-			if(!string.IsNullOrEmpty(includeProperties))
+			if(filter != null) { 
+				query = query.Where(filter);
+			}
+            if (!string.IsNullOrEmpty(includeProperties))
 			{
 				foreach (var includeProp in includeProperties
 					.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
