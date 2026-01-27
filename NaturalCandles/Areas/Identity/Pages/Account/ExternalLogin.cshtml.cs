@@ -62,7 +62,9 @@ namespace NaturalCandles.Areas.Identity.Pages.Account
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        public string ReturnUrl { get; set; }
+        [BindProperty(SupportsGet = true)]
+
+        public string? ReturnUrl { get; set; }
 
         /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
@@ -84,26 +86,29 @@ namespace NaturalCandles.Areas.Identity.Pages.Account
             [Required]
             [EmailAddress]
             public string Email { get; set; }
+
         }
         
         public IActionResult OnGet() => RedirectToPage("./Login");
 
-        public IActionResult OnPost(string provider, string returnUrl = null)
+        public IActionResult OnPost([FromForm] string provider)
         {
-            // Request a redirect to the external login provider.
-            var redirectUrl = Url.Page("./ExternalLogin", pageHandler: "Callback", values: new { returnUrl });
+            ReturnUrl ??= Url.Content("~/");
+            var redirectUrl = Url.Page("/Account/ExternalLogin", "Callback", new { returnUrl = ReturnUrl }, Request.Scheme);
             var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
             return new ChallengeResult(provider, properties);
         }
 
-        public async Task<IActionResult> OnGetCallbackAsync(string returnUrl = null, string remoteError = null)
+        public async Task<IActionResult> OnGetCallbackAsync(string? returnUrl = null, string? remoteError = null)
         {
-            returnUrl = returnUrl ?? Url.Content("~/");
+            returnUrl ??= Url.Content("~/");
+
             if (remoteError != null)
             {
                 ErrorMessage = $"Error from external provider: {remoteError}";
                 return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
             }
+
             var info = await _signInManager.GetExternalLoginInfoAsync();
             if (info == null)
             {
@@ -111,32 +116,66 @@ namespace NaturalCandles.Areas.Identity.Pages.Account
                 return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
             }
 
-            // Sign in the user with this external login provider if the user already has a login.
-            var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false, bypassTwoFactor: true);
-            if (result.Succeeded)
-            {
-                _logger.LogInformation("{Name} logged in with {LoginProvider} provider.", info.Principal.Identity.Name, info.LoginProvider);
+            // 1) If this external login is already linked, sign in normally
+            var signInResult = await _signInManager.ExternalLoginSignInAsync(
+                info.LoginProvider,
+                info.ProviderKey,
+                isPersistent: false,
+                bypassTwoFactor: true);
+
+            if (signInResult.Succeeded)
                 return LocalRedirect(returnUrl);
-            }
-            if (result.IsLockedOut)
+
+            // 2) Try to link by email to an existing user
+            var email = info.Principal.FindFirstValue(System.Security.Claims.ClaimTypes.Email);
+            if (!string.IsNullOrEmpty(email))
             {
-                return RedirectToPage("./Lockout");
-            }
-            else
-            {
-                // If the user does not have an account, then ask the user to create an account.
-                ReturnUrl = returnUrl;
-                ProviderDisplayName = info.ProviderDisplayName;
-                if (info.Principal.HasClaim(c => c.Type == ClaimTypes.Email))
+                var existingUser = await _userManager.FindByEmailAsync(email);
+                if (existingUser != null)
                 {
-                    Input = new InputModel
+                    // Optional but recommended: block linking if the provider email is not verified
+                    // (Google provides email_verified; Facebook may not)
+                    if (!IsEmailVerifiedByProvider(info))
                     {
-                        Email = info.Principal.FindFirstValue(ClaimTypes.Email)
-                    };
+                        ErrorMessage = "This provider did not verify your email. Please sign in with your password first, then link this provider from your profile.";
+                        return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
+                    }
+
+                    var addLoginResult = await _userManager.AddLoginAsync(existingUser, info);
+                    if (addLoginResult.Succeeded)
+                    {
+                        await _signInManager.SignInAsync(existingUser, isPersistent: false);
+                        return LocalRedirect(returnUrl);
+                    }
+
+                    // If it's already linked to another user, you'll get an error here
+                    foreach (var error in addLoginResult.Errors)
+                        ModelState.AddModelError(string.Empty, error.Description);
+
+                    return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
                 }
-                return Page();
             }
+
+            // 3) No existing user -> proceed with normal flow (create user / ask for email, etc.)
+            ReturnUrl = returnUrl;
+            ProviderDisplayName = info.ProviderDisplayName;
+            if (email != null)
+                Input = new InputModel { Email = email };
+
+            return Page();
         }
+
+        // Example helper (simple version)
+        private static bool IsEmailVerifiedByProvider(ExternalLoginInfo info)
+        {
+            // Google uses "email_verified" = "true"
+            var emailVerified = info.Principal.FindFirstValue("email_verified");
+            if (emailVerified is null)
+                return true; // for providers that don't send it, decide your policy
+
+            return string.Equals(emailVerified, "true", StringComparison.OrdinalIgnoreCase);
+        }
+
 
         public async Task<IActionResult> OnPostConfirmationAsync(string returnUrl = null)
         {
