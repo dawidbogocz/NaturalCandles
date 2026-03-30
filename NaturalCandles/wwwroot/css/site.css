@@ -1,34 +1,162 @@
-/* Keep Bootstrap theme colors untouched.
-   Only add small layout + polish helpers.
-*/
-
 html, body {
     height: 100%;
+    margin: 0;
 }
 
 body {
-    background: #f8f9fa; /* subtle Bootstrap-ish gray */
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #f8f9fa;
 }
 
-/* Cleaner cards (works well with black/white) */
+.app-header {
+    flex: 0 0 auto;
+}
+
+.app-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.app-main {
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+    padding-bottom: 1rem;
+}
+
+.app-footer {
+    flex: 0 0 auto;
+    width: 100%;
+}
+
 .card {
     border-color: rgba(0,0,0,.075);
 }
 
-/* Optional: a slightly nicer product image crop */
 .product-card-img {
     aspect-ratio: 4 / 3;
     object-fit: cover;
 }
 
-/* Keep focus accessible but not ugly */
 :focus-visible {
     outline: none;
-    box-shadow: 0 0 0 .25rem rgba(13,110,253,.2); /* Bootstrap primary glow */
+    box-shadow: 0 0 0 .25rem rgba(13,110,253,.2);
 }
 
-/* Small helper for “pill” category badge */
 .badge-category {
     background: #111;
     color: #fff;
 }
+
+/* admin form helpers */
+.admin-form-card {
+    border-radius: 1rem;
+    background: #fff;
+    box-shadow: 0 .5rem 1.2rem rgba(0,0,0,.06);
+}
+
+.admin-sticky-preview {
+    position: sticky;
+    top: 1.5rem;
+}
+
+.admin-image-preview {
+    width: 100%;
+    max-height: 380px;
+    object-fit: cover;
+    border-radius: 1rem;
+    border: 1px solid #dee2e6;
+    background: #fff;
+}
+
+.price-tier-row {
+    padding: .9rem;
+    border: 1px solid #e9ecef;
+    border-radius: .75rem;
+    background: #fafafa;
+}
+
+    .price-tier-row + .price-tier-row {
+        margin-top: .75rem;
+    }
+
+@media (max-width: 991.98px) {
+    .admin-sticky-preview {
+        position: static;
+        top: auto;
+    }
+
+    .admin-image-preview {
+        max-height: 260px;
+    }
+}
+
+.product-hover-card {
+    overflow: hidden;
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+
+    .product-hover-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 .75rem 1.5rem rgba(0,0,0,.12);
+    }
+
+.product-card-image-wrap {
+    position: relative;
+    overflow: hidden;
+}
+
+.product-hover-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(17, 17, 17, 0.92);
+    color: #fff;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .2s ease, visibility .2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.product-hover-card:hover .product-hover-overlay,
+.product-hover-card:focus-within .product-hover-overlay {
+    opacity: 1;
+    visibility: visible;
+}
+
+.product-hover-content {
+    width: 100%;
+}
+
+.product-short-description {
+    max-height: 6.5rem;
+    overflow: hidden;
+}
+
+.product-card-img {
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    transition: transform .25s ease;
+}
+
+.product-hover-card:hover .product-card-img {
+    transform: scale(1.04);
+}
+
+.product-hover-card.expand-left {
+    left: -540px;
+}
+
+    .product-hover-card.expand-left .product-expanded-panel {
+        left: auto;
+        right: 100%;
+        border-left: 0;
+        border-right: 1px solid #ececec;
+    }

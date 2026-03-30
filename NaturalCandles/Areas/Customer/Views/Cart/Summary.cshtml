@@ -1,6 +1,15 @@
-﻿@model ShoppingCartVM
+﻿@model NaturalCandles.Models.ViewModels.ShoppingCartVM
+@using NaturalCandles.Models.Enums
+@using System.Globalization
+
+@{
+    var culture = new CultureInfo("pl-PL");
+    var subtotal = Model.OrderHeader.OrderTotal - Model.OrderHeader.DeliveryPrice;
+}
 
 <form method="post">
+    @Html.AntiForgeryToken()
+
     <br />
     <div class="container">
         <div class="card shadow-sm border-0">
@@ -17,11 +26,11 @@
 
             <div class="card-body">
                 <div class="row g-4">
-                    <div class="col-12 col-lg-6">
-                        <h5 class="mb-3">Shipping Details</h5>
+                    <div class="col-12 col-lg-7">
+                        <h5 class="mb-3">Shipping details</h5>
 
                         <div class="row g-2 align-items-center mb-2">
-                            <div class="col-3"><label class="form-label mb-0">Name</label></div>
+                            <div class="col-3"><label asp-for="OrderHeader.Name" class="form-label mb-0"></label></div>
                             <div class="col-9">
                                 <input asp-for="OrderHeader.Name" class="form-control" />
                                 <span asp-validation-for="OrderHeader.Name" class="text-danger"></span>
@@ -29,7 +38,7 @@
                         </div>
 
                         <div class="row g-2 align-items-center mb-2">
-                            <div class="col-3"><label class="form-label mb-0">Phone</label></div>
+                            <div class="col-3"><label asp-for="OrderHeader.PhoneNumber" class="form-label mb-0"></label></div>
                             <div class="col-9">
                                 <input asp-for="OrderHeader.PhoneNumber" class="form-control" />
                                 <span asp-validation-for="OrderHeader.PhoneNumber" class="text-danger"></span>
@@ -37,7 +46,7 @@
                         </div>
 
                         <div class="row g-2 align-items-center mb-2">
-                            <div class="col-3"><label class="form-label mb-0">Street</label></div>
+                            <div class="col-3"><label asp-for="OrderHeader.StreetAddress" class="form-label mb-0">Street</label></div>
                             <div class="col-9">
                                 <input asp-for="OrderHeader.StreetAddress" class="form-control" />
                                 <span asp-validation-for="OrderHeader.StreetAddress" class="text-danger"></span>
@@ -45,7 +54,7 @@
                         </div>
 
                         <div class="row g-2 align-items-center mb-2">
-                            <div class="col-3"><label class="form-label mb-0">City</label></div>
+                            <div class="col-3"><label asp-for="OrderHeader.City" class="form-label mb-0"></label></div>
                             <div class="col-9">
                                 <input asp-for="OrderHeader.City" class="form-control" />
                                 <span asp-validation-for="OrderHeader.City" class="text-danger"></span>
@@ -53,24 +62,86 @@
                         </div>
 
                         <div class="row g-2 align-items-center mb-2">
-                            <div class="col-3"><label class="form-label mb-0">State</label></div>
+                            <div class="col-3"><label asp-for="OrderHeader.PostalCode" class="form-label mb-0">Postal code</label></div>
+                            <div class="col-9">
+                                <input asp-for="OrderHeader.PostalCode" class="form-control" placeholder="00-000" />
+                                <span asp-validation-for="OrderHeader.PostalCode" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 align-items-center mb-4">
+                            <div class="col-3"><label asp-for="OrderHeader.State" class="form-label mb-0">Region</label></div>
                             <div class="col-9">
                                 <input asp-for="OrderHeader.State" class="form-control" />
                                 <span asp-validation-for="OrderHeader.State" class="text-danger"></span>
                             </div>
                         </div>
 
-                        <div class="row g-2 align-items-center mb-2">
-                            <div class="col-3"><label class="form-label mb-0">Postal</label></div>
-                            <div class="col-9">
-                                <input asp-for="OrderHeader.PostalCode" class="form-control" />
-                                <span asp-validation-for="OrderHeader.PostalCode" class="text-danger"></span>
-                            </div>
+                        <h5 class="mb-3">Delivery method</h5>
+                        <div class="mb-3">
+                            @foreach (ShippingMethod method in Enum.GetValues(typeof(ShippingMethod)))
+                            {
+                                <div class="form-check mb-2">
+                                    <input asp-for="OrderHeader.ShippingMethod"
+                                           class="form-check-input shipping-method"
+                                           type="radio"
+                                           value="@method"
+                                           id="shipping_@method" />
+                                    <label class="form-check-label" for="shipping_@method">
+                                        @method switch
+                                        {
+                                        ShippingMethod.InPostLocker => "InPost Paczkomat - 14,99 zł",
+                                        ShippingMethod.InPostCourier => "InPost Kurier - 16,99 zł",
+                                        ShippingMethod.DpdCourier => "DPD Kurier - 18,99 zł",
+                                        ShippingMethod.OrlenPaczka => "ORLEN Paczka - 12,99 zł",
+                                        ShippingMethod.LocalPickup => "Odbiór osobisty - 0,00 zł",
+                                        _ => method.ToString()
+                                        }
+                                    </label>
+                                </div>
+                            }
+                            <span asp-validation-for="OrderHeader.ShippingMethod" class="text-danger"></span>
+                        </div>
+
+                        <div id="pickupPointBox" class="mb-4" style="display:none;">
+                            <label asp-for="OrderHeader.DeliveryPointId" class="form-label">Pickup point / locker ID</label>
+                            <input asp-for="OrderHeader.DeliveryPointId" class="form-control" placeholder="e.g. WAW123M or ORLEN point code" />
+                            <span asp-validation-for="OrderHeader.DeliveryPointId" class="text-danger"></span>
+
+                            <label asp-for="OrderHeader.DeliveryPointName" class="form-label mt-2">Pickup point name</label>
+                            <input asp-for="OrderHeader.DeliveryPointName" class="form-control" placeholder="Optional display name" />
+                            <span asp-validation-for="OrderHeader.DeliveryPointName" class="text-danger"></span>
+                        </div>
+
+                        <h5 class="mb-3">Payment method</h5>
+                        <div class="mb-3">
+                            @foreach (PaymentMethod method in Enum.GetValues(typeof(PaymentMethod)))
+                            {
+                                <div class="form-check mb-2">
+                                    <input asp-for="OrderHeader.PaymentMethod"
+                                           class="form-check-input"
+                                           type="radio"
+                                           value="@method"
+                                           id="payment_@method" />
+                                    <label class="form-check-label" for="payment_@method">
+                                        @method switch
+                                        {
+                                        PaymentMethod.Blik => "BLIK",
+                                        PaymentMethod.Przelewy24 => "Przelewy24",
+                                        PaymentMethod.Card => "Card",
+                                        PaymentMethod.BankTransfer => "Traditional bank transfer",
+                                        PaymentMethod.CashOnDelivery => "Cash on delivery",
+                                        _ => method.ToString()
+                                        }
+                                    </label>
+                                </div>
+                            }
+                            <span asp-validation-for="OrderHeader.PaymentMethod" class="text-danger"></span>
                         </div>
                     </div>
 
-                    <div class="col-12 col-lg-6">
-                        <h5 class="mb-3">Order Summary</h5>
+                    <div class="col-12 col-lg-5">
+                        <h5 class="mb-3">Order summary</h5>
 
                         <ul class="list-group mb-3">
                             @foreach (var details in Model.ShoppingCartList)
@@ -81,33 +152,90 @@
                                         <small class="text-muted">Quantity: @details.Count</small>
                                     </div>
                                     <span class="text-muted">
-                                        @((details.Price * details.Count).ToString("c", new System.Globalization.CultureInfo("pl-PL")))
+                                        @((details.Price * details.Count).ToString("c", culture))
                                     </span>
                                 </li>
                             }
 
+                            <li class="list-group-item d-flex justify-content-between">
+                                <small class="text-muted">Products</small>
+                                <span>@subtotal.ToString("c", culture)</span>
+                            </li>
+
+                            <li class="list-group-item d-flex justify-content-between">
+                                <small class="text-muted">Delivery</small>
+                                <span id="deliveryPriceLabel">@Model.OrderHeader.DeliveryPrice.ToString("c", culture)</span>
+                            </li>
+
                             <li class="list-group-item d-flex justify-content-between bg-light">
-                                <small class="text-muted">Total (PLN)</small>
-                                <strong>@Model.OrderHeader.OrderTotal.ToString("c", new System.Globalization.CultureInfo("pl-PL"))</strong>
+                                <strong>Total</strong>
+                                <strong id="grandTotalLabel">@Model.OrderHeader.OrderTotal.ToString("c", culture)</strong>
                             </li>
                         </ul>
 
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <small class="text-muted">
-                                Estimate arrival:
-                                @DateTime.Now.AddDays(7).ToShortDateString()
+                                Estimated arrival:
+                                @DateTime.Now.AddDays(2).ToShortDateString()
                                 -
-                                @DateTime.Now.AddDays(14).ToShortDateString()
+                                @DateTime.Now.AddDays(5).ToShortDateString()
                             </small>
                         </div>
 
                         <button type="submit" class="btn btn-dark w-100 py-2">
-                            Place Order
+                            Place order
                         </button>
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 </form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        (function () {
+            const shippingInputs = document.querySelectorAll(".shipping-method");
+            const pickupPointBox = document.getElementById("pickupPointBox");
+            const deliveryPriceLabel = document.getElementById("deliveryPriceLabel");
+            const grandTotalLabel = document.getElementById("grandTotalLabel");
+
+            const subtotal = @subtotal.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+            const prices = {
+                "InPostLocker": 14.99,
+                "InPostCourier": 16.99,
+                "DpdCourier": 18.99,
+                "OrlenPaczka": 12.99,
+                "LocalPickup": 0.00
+            };
+
+            function formatPln(value) {
+                return new Intl.NumberFormat("pl-PL", {
+                    style: "currency",
+                    currency: "PLN"
+                }).format(value);
+            }
+
+            function updateUi() {
+                const selected = document.querySelector(".shipping-method:checked");
+                const method = selected ? selected.value : null;
+                const deliveryPrice = method && prices[method] !== undefined ? prices[method] : 0;
+
+                if (method === "InPostLocker" || method === "OrlenPaczka") {
+                    pickupPointBox.style.display = "block";
+                } else {
+                    pickupPointBox.style.display = "none";
+                }
+
+                deliveryPriceLabel.textContent = formatPln(deliveryPrice);
+                grandTotalLabel.textContent = formatPln(Number(subtotal) + deliveryPrice);
+            }
+
+            shippingInputs.forEach(x => x.addEventListener("change", updateUi));
+            updateUi();
+        })();
+    </script>
+}

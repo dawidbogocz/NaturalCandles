@@ -5,32 +5,26 @@
 namespace NaturalCandles.DataAccess.Migrations
 {
     /// <inheritdoc />
-    public partial class AddShoppingCartToDB : Migration
+    public partial class ProductPriceTier : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "ShoppingCarts",
+                name: "ProductPriceTiers",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     ProductId = table.Column<int>(type: "int", nullable: false),
-                    Count = table.Column<int>(type: "int", nullable: false),
-                    ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    MinQuantity = table.Column<int>(type: "int", nullable: false),
+                    Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ShoppingCarts", x => x.Id);
+                    table.PrimaryKey("PK_ProductPriceTiers", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ShoppingCarts_AspNetUsers_ApplicationUserId",
-                        column: x => x.ApplicationUserId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ShoppingCarts_Products_ProductId",
+                        name: "FK_ProductPriceTiers_Products_ProductId",
                         column: x => x.ProductId,
                         principalTable: "Products",
                         principalColumn: "ProductId",
@@ -38,13 +32,8 @@ namespace NaturalCandles.DataAccess.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_ShoppingCarts_ApplicationUserId",
-                table: "ShoppingCarts",
-                column: "ApplicationUserId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ShoppingCarts_ProductId",
-                table: "ShoppingCarts",
+                name: "IX_ProductPriceTiers_ProductId",
+                table: "ProductPriceTiers",
                 column: "ProductId");
         }
 
@@ -52,7 +41,7 @@ namespace NaturalCandles.DataAccess.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "ShoppingCarts");
+                name: "ProductPriceTiers");
         }
     }
 }

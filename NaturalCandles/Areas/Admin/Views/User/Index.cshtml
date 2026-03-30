@@ -1,0 +1,39 @@
+﻿@model IEnumerable<NaturalCandles.Models.ViewModels.UserRoleVM>
+
+<div class="container mt-4">
+    <div class="row pb-3">
+        <div class="col-6">
+            <h2 class="text-primary">Users</h2>
+        </div>
+    </div>
+
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Full name</th>
+                <th>Email</th>
+                <th>Current role</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model)
+            {
+                <tr>
+                    <td>@user.FullName</td>
+                    <td>@user.Email</td>
+                    <td>@user.CurrentRole</td>
+                    <td>
+                        <a asp-area="Admin"
+                               asp-controller="User"
+                               asp-action="EditRole"
+                               asp-route-id="@user.UserId"
+                               class="btn btn-sm btn-primary">
+                            Change role
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

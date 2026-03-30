@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace NaturalCandles.Models.Enums
 {
-
     public enum CandleColor
     {
-        None, // Default if color option is not available or not selected
+        None,
         Yes,
         No
     }
@@ -22,17 +17,27 @@ namespace NaturalCandles.Models.Enums
 
     public enum ColorScheme
     {
-        None, // Optional if product doesn't use color schemes
+        None,
         Róż,
         Beż
     }
 
     public enum ShippingMethod
     {
-        PersonalPickup,     // 10 zł
-        InPostPaczkomat,    // 20 zł
-        DPDKurier,          // 25 zł
-        InPostKurier        // TBD
+        [Display(Name = "InPost Paczkomat")]
+        InPostLocker = 1,
+
+        [Display(Name = "InPost Kurier")]
+        InPostCourier = 2,
+
+        [Display(Name = "DPD Kurier")]
+        DpdCourier = 3,
+
+        [Display(Name = "ORLEN Paczka")]
+        OrlenPaczka = 4,
+
+        [Display(Name = "Odbiór osobisty")]
+        LocalPickup = 5
     }
 
     public enum PaymentStatus
@@ -44,8 +49,19 @@ namespace NaturalCandles.Models.Enums
 
     public enum PaymentMethod
     {
-        Card,
-        PayPal,
-        BankTransfer
+        [Display(Name = "BLIK")]
+        Blik = 1,
+
+        [Display(Name = "Przelewy24")]
+        Przelewy24 = 2,
+
+        [Display(Name = "Karta płatnicza")]
+        Card = 3,
+
+        [Display(Name = "Przelew tradycyjny")]
+        BankTransfer = 4,
+
+        [Display(Name = "Płatność przy odbiorze")]
+        CashOnDelivery = 5
     }
 }

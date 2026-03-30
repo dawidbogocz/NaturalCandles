@@ -1,126 +1,233 @@
 ﻿@model ProductVM
 
 <form method="post" enctype="multipart/form-data">
-	<input asp-for="Product.ProductId" hidden />
-	<input asp-for="Product.ImageUrl" hidden />
-	<div class="border p-3 mt-4">
-		<div class="row pb-2">
-			<h2 class="text-primary">@(Model.Product.ProductId!=0?"Update":"Create") Product</h2>
-			<hr/>
-		</div>
-		@* <div asp-validation-summary="ModelOnly"></div> *@
+    <input asp-for="Product.ProductId" hidden />
+    <input asp-for="Product.ImageUrl" hidden />
 
-		<div class="row">
-			<div class="col-10">
-				@* Name *@
-		<div class="form-floating py-2 col-12">
-			<label asp-for="Product.Name" class="p-0"></label>
-			<input asp-for="Product.Name" class="form-control"/>
-			<span asp-validation-for="Product.Name" class="text-danger"></span>
-		</div>
+    <div class="admin-form-card p-3 p-md-4 mt-4 mb-5">
+        <div class="row pb-2">
+            <div class="col-12">
+                <h2 class="text-primary mb-2">@(Model.Product.ProductId != 0 ? "Update" : "Create") Product</h2>
+                <hr />
+            </div>
+        </div>
 
-				@* Description *@
-		<div class="form-floating py-2 col-12">
-			<label asp-for="Product.Description" class="p-0"></label>
-			<input asp-for="Product.Description" class="form-control"/>
-			<span asp-validation-for="Product.Description" class="text-danger"></span>
-		</div>
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-				@* CategoryName *@
-		<div class="form-floating py-2 col-12">
-			<label asp-for="Product.CategoryName" class="p-0"></label>
-			<select asp-for="Product.CategoryName" asp-items="@Model.CategoryList" class="form-select p-0">
-				<option disabled selected>--Select Category--</option>
-			</select>
-			<span asp-validation-for="Product.CategoryName" class="text-danger"></span>
-		</div>
+        <div class="row g-4">
+            <div class="col-12 col-xl-8">
+                <div class="form-floating mb-3">
+                    <input asp-for="Product.Name" class="form-control" placeholder="Name" />
+                    <label asp-for="Product.Name"></label>
+                    <span asp-validation-for="Product.Name" class="text-danger"></span>
+                </div>
 
-				@* BasePrice *@
-		<div class="form-floating py-2 col-12">
-			<label asp-for="Product.BasePrice" class="p-0"></label>
-			<input asp-for="Product.BasePrice" class="form-control" />
-			<span asp-validation-for="Product.BasePrice" class="text-danger"></span>
-		</div>
+                <div class="mb-3">
+                    <label asp-for="Product.Description" class="form-label fw-semibold"></label>
+                    <textarea asp-for="Product.Description" class="form-control" rows="5"></textarea>
+                    <span asp-validation-for="Product.Description" class="text-danger"></span>
+                </div>
 
-				@* Price4 *@
-		<div class="form-floating py-2 col-12">
-			<label asp-for="Product.Price4" class="p-0"></label>
-			<input asp-for="Product.Price4" class="form-control" />
-			<span asp-validation-for="Product.Price4" class="text-danger"></span>
-		</div>
+                <div class="form-floating mb-3">
+                    <select asp-for="Product.CategoryName" asp-items="@Model.CategoryList" class="form-select">
+                        <option disabled selected>-- Select category --</option>
+                    </select>
+                    <label asp-for="Product.CategoryName"></label>
+                    <span asp-validation-for="Product.CategoryName" class="text-danger"></span>
+                </div>
 
-				@* Price10 *@
-		<div class="form-floating py-2 col-12">
-			<label asp-for="Product.Price10" class="p-0"></label>
-			<input asp-for="Product.Price10" class="form-control" />
-			<span asp-validation-for="Product.Price10" class="text-danger"></span>
-		</div>
+                <div class="mb-4">
+                    <label class="form-label fw-bold mb-3">Pricing tiers</label>
 
-				@* ImageUrl *@
-		<div class="form-floating py-2 col-12 form-check">
-			<input type="file" name="file" class="form-control" />
-			<label asp-for="Product.ImageUrl" class="ms-2"></label>
-		</div>
+                    <div id="tierRows">
+                        @for (int i = 0; i < Model.PriceTiers.Count; i++)
+                        {
+                            <div class="price-tier-row tier-row">
+                                <input type="hidden" name="PriceTiers[@i].Id" value="@Model.PriceTiers[i].Id" />
+                                <input type="hidden" name="PriceTiers[@i].ProductId" value="@Model.Product.ProductId" />
 
-				@* AvailableNow (Checkbox) *@
-		<div class="form-floating py-2 col-12 form-check">
-			<input asp-for="Product.AvailableNow" class="form-check-input" />
-			<label asp-for="Product.AvailableNow" class="form-check-label"></label>
-			<span asp-validation-for="Product.AvailableNow" class="text-danger"></span>
-		</div>
+                                <div class="row g-3">
+                                    <div class="col-12 col-md-5">
+                                        <label class="form-label">Starts at quantity</label>
+                                        <input name="PriceTiers[@i].MinQuantity"
+                                               value="@Model.PriceTiers[i].MinQuantity"
+                                               type="number"
+                                               min="1"
+                                               class="form-control tier-min" />
+                                    </div>
 
-				@* HasColorOption *@
-		<div class="form-floating py-2 col-12 form-check">
-			<input asp-for="Product.HasColorOption" class="form-check-input" />
-			<label asp-for="Product.HasColorOption" class="form-check-label"></label>
-			<span asp-validation-for="Product.HasColorOption" class="text-danger"></span>
-		</div>
+                                    <div class="col-12 col-md-5">
+                                        <label class="form-label">Unit price</label>
+                                        <input name="PriceTiers[@i].Price"
+                                               value="@Model.PriceTiers[i].Price"
+                                               type="number"
+                                               step="0.01"
+                                               min="0.01"
+                                               class="form-control tier-price" />
+                                    </div>
 
-				@* HasTypeOption *@
-		<div class="form-floating py-2 col-12 form-check">
-			<input asp-for="Product.HasTypeOption" class="form-check-input" />
-			<label asp-for="Product.HasTypeOption" class="form-check-label"></label>
-			<span asp-validation-for="Product.HasTypeOption" class="text-danger"></span>
-		</div>
+                                    <div class="col-12 col-md-2 d-flex align-items-end">
+                                        <button type="button" class="btn btn-outline-danger w-100 remove-tier">
+                                            Remove
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
 
-				@* HasColorSchemeOption *@
-		<div class="form-floating py-2 col-12 form-check">
-			<input asp-for="Product.HasColorSchemeOption" class="form-check-input" />
-			<label asp-for="Product.HasColorSchemeOption" class="form-check-label"></label>
-			<span asp-validation-for="Product.HasColorSchemeOption" class="text-danger"></span>
-		</div>
+                    <button type="button" id="addTierBtn" class="btn btn-outline-dark mt-3">
+                        Add pricing tier
+                    </button>
 
+                    <div class="form-text mt-2">
+                        Example: 1 → 25.00, 4 → 22.00, 10 → 19.00
+                    </div>
+                </div>
 
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Product image</label>
+                    <input type="file" name="file" class="form-control" />
+                </div>
 
-		<div class="row pt-2">
-			<div class="col-6 col-md-3">
-						@if (Model.Product.ProductId != 0)
-						{
-						<button type="submit" class="btn btn-primary form-control" >Update</button>
-						}
-						else
-						{
-						<button type="submit" class="btn btn-primary form-control" >Create</button>
-						}
-			</div>
-			<div class="col-6 col-md-3">
-			<a asp-controller="Product" asp-action="Index" class="btn btn-outline-secondary form-control">
-				 Back to list
-			 </a>
-			</div>
-		</div>
-			</div>
+                <div class="row g-2 mb-4">
+                    <div class="col-12 col-md-6">
+                        <div class="form-check">
+                            <input asp-for="Product.AvailableNow" class="form-check-input" />
+                            <label asp-for="Product.AvailableNow" class="form-check-label"></label>
+                        </div>
+                    </div>
 
-			<div class="col-2">
-				<img src="@Model.Product.ImageUrl" width="100%" 
-					style="border-radius:5px; border:1px solid #bbb9b9" />
-			</div>
-		</div>
+                    <div class="col-12 col-md-6">
+                        <div class="form-check">
+                            <input asp-for="Product.HasColorOption" class="form-check-input" />
+                            <label asp-for="Product.HasColorOption" class="form-check-label"></label>
+                        </div>
+                    </div>
 
+                    <div class="col-12 col-md-6">
+                        <div class="form-check">
+                            <input asp-for="Product.HasTypeOption" class="form-check-input" />
+                            <label asp-for="Product.HasTypeOption" class="form-check-label"></label>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <div class="form-check">
+                            <input asp-for="Product.HasColorSchemeOption" class="form-check-input" />
+                            <label asp-for="Product.HasColorSchemeOption" class="form-check-label"></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-2">
+                    <div class="col-12 col-md-4">
+                        <button type="submit" class="btn btn-primary w-100">
+                            @(Model.Product.ProductId != 0 ? "Update" : "Create")
+                        </button>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <a asp-controller="Product" asp-action="Index" class="btn btn-outline-secondary w-100">
+                            Back to list
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-xl-4">
+                <div class="admin-sticky-preview">
+                    @if (!string.IsNullOrWhiteSpace(Model.Product.ImageUrl))
+                    {
+                        <img src="@Model.Product.ImageUrl" class="admin-image-preview" alt="Product image" />
+                    }
+                    else
+                    {
+                        <div class="admin-image-preview d-flex align-items-center justify-content-center text-muted">
+                            No image uploaded yet
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
 </form>
 
-@section Scripts{
-	@{
-		<patrial name="_ValidationScriptsPartial" />
-	}
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        (function () {
+            const tierRows = document.getElementById("tierRows");
+            const addTierBtn = document.getElementById("addTierBtn");
+
+            function reindexTierRows() {
+                const rows = tierRows.querySelectorAll(".tier-row");
+                rows.forEach((row, index) => {
+                    row.querySelectorAll("input").forEach(input => {
+                        if (input.name.includes(".Id")) {
+                            input.name = `PriceTiers[${index}].Id`;
+                        } else if (input.name.includes(".ProductId")) {
+                            input.name = `PriceTiers[${index}].ProductId`;
+                        } else if (input.classList.contains("tier-min")) {
+                            input.name = `PriceTiers[${index}].MinQuantity`;
+                        } else if (input.classList.contains("tier-price")) {
+                            input.name = `PriceTiers[${index}].Price`;
+                        }
+                    });
+                });
+            }
+
+            function buildTierRow(index) {
+                const wrapper = document.createElement("div");
+                wrapper.className = "price-tier-row tier-row";
+                wrapper.innerHTML = `
+                    <input type="hidden" name="PriceTiers[${index}].Id" value="0" />
+                    <input type="hidden" name="PriceTiers[${index}].ProductId" value="@Model.Product.ProductId" />
+
+                    <div class="row g-3">
+                        <div class="col-12 col-md-5">
+                            <label class="form-label">Starts at quantity</label>
+                            <input name="PriceTiers[${index}].MinQuantity"
+                                   type="number"
+                                   min="1"
+                                   value="1"
+                                   class="form-control tier-min" />
+                        </div>
+
+                        <div class="col-12 col-md-5">
+                            <label class="form-label">Unit price</label>
+                            <input name="PriceTiers[${index}].Price"
+                                   type="number"
+                                   step="0.01"
+                                   min="0.01"
+                                   value="0.01"
+                                   class="form-control tier-price" />
+                        </div>
+
+                        <div class="col-12 col-md-2 d-flex align-items-end">
+                            <button type="button" class="btn btn-outline-danger w-100 remove-tier">Remove</button>
+                        </div>
+                    </div>
+                `;
+                return wrapper;
+            }
+
+            addTierBtn.addEventListener("click", function () {
+                const index = tierRows.querySelectorAll(".tier-row").length;
+                tierRows.appendChild(buildTierRow(index));
+            });
+
+            tierRows.addEventListener("click", function (e) {
+                if (e.target.classList.contains("remove-tier")) {
+                    const rows = tierRows.querySelectorAll(".tier-row");
+                    if (rows.length === 1) {
+                        return;
+                    }
+
+                    e.target.closest(".tier-row").remove();
+                    reindexTierRows();
+                }
+            });
+        })();
+    </script>
 }
