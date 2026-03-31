@@ -57,19 +57,19 @@
 
                             <div class="col-12 col-lg-2 mt-3 mt-lg-0">
                                 <div class="d-grid gap-2">
-                                    <form asp-action="Plus" method="post">
+                                    <form asp-area="Customer" asp-controller="Cart" asp-action="Plus" method="post">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="cartId" value="@item.Id" />
                                         <button type="submit" class="btn btn-outline-secondary w-100">+</button>
                                     </form>
 
-                                    <form asp-action="Minus" method="post">
+                                    <form asp-area="Customer" asp-controller="Cart" asp-action="Minus" method="post">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="cartId" value="@item.Id" />
                                         <button type="submit" class="btn btn-outline-secondary w-100">-</button>
                                     </form>
 
-                                    <form asp-action="Remove" method="post">
+                                    <form asp-area="Customer" asp-controller="Cart" asp-action="Remove" method="post">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="cartId" value="@item.Id" />
                                         <button type="submit" class="btn btn-outline-danger w-100">Remove</button>

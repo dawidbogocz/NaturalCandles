@@ -1,17 +1,15 @@
 ﻿@model NaturalCandles.Models.ViewModels.ShoppingCartVM
-@using NaturalCandles.Models.Enums
 @using System.Globalization
 
 @{
     var culture = new CultureInfo("pl-PL");
-    var subtotal = Model.OrderHeader.OrderTotal - Model.OrderHeader.DeliveryPrice;
+    var subtotal = Model.ShoppingCartList.Sum(x => x.Price * x.Count);
 }
 
 <form method="post">
     @Html.AntiForgeryToken()
 
-    <br />
-    <div class="container">
+    <div class="container py-4">
         <div class="card shadow-sm border-0">
             <div class="card-header bg-dark text-white py-4">
                 <div class="row px-4 align-items-center">
@@ -42,6 +40,14 @@
                             <div class="col-9">
                                 <input asp-for="OrderHeader.PhoneNumber" class="form-control" />
                                 <span asp-validation-for="OrderHeader.PhoneNumber" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 align-items-center mb-2">
+                            <div class="col-3"><label asp-for="OrderHeader.EmailAddress" class="form-label mb-0"></label></div>
+                            <div class="col-9">
+                                <input asp-for="OrderHeader.EmailAddress" class="form-control" />
+                                <span asp-validation-for="OrderHeader.EmailAddress" class="text-danger"></span>
                             </div>
                         </div>
 
@@ -79,24 +85,18 @@
 
                         <h5 class="mb-3">Delivery method</h5>
                         <div class="mb-3">
-                            @foreach (ShippingMethod method in Enum.GetValues(typeof(ShippingMethod)))
+                            @foreach (var shipping in Model.ShippingMethodSettings)
                             {
                                 <div class="form-check mb-2">
                                     <input asp-for="OrderHeader.ShippingMethod"
                                            class="form-check-input shipping-method"
                                            type="radio"
-                                           value="@method"
-                                           id="shipping_@method" />
-                                    <label class="form-check-label" for="shipping_@method">
-                                        @method switch
-                                        {
-                                        ShippingMethod.InPostLocker => "InPost Paczkomat - 14,99 zł",
-                                        ShippingMethod.InPostCourier => "InPost Kurier - 16,99 zł",
-                                        ShippingMethod.DpdCourier => "DPD Kurier - 18,99 zł",
-                                        ShippingMethod.OrlenPaczka => "ORLEN Paczka - 12,99 zł",
-                                        ShippingMethod.LocalPickup => "Odbiór osobisty - 0,00 zł",
-                                        _ => method.ToString()
-                                        }
+                                           value="@shipping.ShippingMethod"
+                                           data-price="@shipping.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                           data-requires-point="@shipping.RequiresPickupPoint.ToString().ToLower()"
+                                           id="shipping_@shipping.ShippingMethod" />
+                                    <label class="form-check-label" for="shipping_@shipping.ShippingMethod">
+                                        @shipping.DisplayName - @shipping.Price.ToString("c", culture)
                                     </label>
                                 </div>
                             }
@@ -105,17 +105,17 @@
 
                         <div id="pickupPointBox" class="mb-4" style="display:none;">
                             <label asp-for="OrderHeader.DeliveryPointId" class="form-label">Pickup point / locker ID</label>
-                            <input asp-for="OrderHeader.DeliveryPointId" class="form-control" placeholder="e.g. WAW123M or ORLEN point code" />
+                            <input asp-for="OrderHeader.DeliveryPointId" class="form-control" />
                             <span asp-validation-for="OrderHeader.DeliveryPointId" class="text-danger"></span>
 
                             <label asp-for="OrderHeader.DeliveryPointName" class="form-label mt-2">Pickup point name</label>
-                            <input asp-for="OrderHeader.DeliveryPointName" class="form-control" placeholder="Optional display name" />
+                            <input asp-for="OrderHeader.DeliveryPointName" class="form-control" />
                             <span asp-validation-for="OrderHeader.DeliveryPointName" class="text-danger"></span>
                         </div>
 
                         <h5 class="mb-3">Payment method</h5>
                         <div class="mb-3">
-                            @foreach (PaymentMethod method in Enum.GetValues(typeof(PaymentMethod)))
+                            @foreach (NaturalCandles.Models.Enums.PaymentMethod method in Enum.GetValues(typeof(NaturalCandles.Models.Enums.PaymentMethod)))
                             {
                                 <div class="form-check mb-2">
                                     <input asp-for="OrderHeader.PaymentMethod"
@@ -124,15 +124,7 @@
                                            value="@method"
                                            id="payment_@method" />
                                     <label class="form-check-label" for="payment_@method">
-                                        @method switch
-                                        {
-                                        PaymentMethod.Blik => "BLIK",
-                                        PaymentMethod.Przelewy24 => "Przelewy24",
-                                        PaymentMethod.Card => "Card",
-                                        PaymentMethod.BankTransfer => "Traditional bank transfer",
-                                        PaymentMethod.CashOnDelivery => "Cash on delivery",
-                                        _ => method.ToString()
-                                        }
+                                        @method
                                     </label>
                                 </div>
                             }
@@ -173,15 +165,6 @@
                             </li>
                         </ul>
 
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <small class="text-muted">
-                                Estimated arrival:
-                                @DateTime.Now.AddDays(2).ToShortDateString()
-                                -
-                                @DateTime.Now.AddDays(5).ToShortDateString()
-                            </small>
-                        </div>
-
                         <button type="submit" class="btn btn-dark w-100 py-2">
                             Place order
                         </button>
@@ -201,16 +184,7 @@
             const pickupPointBox = document.getElementById("pickupPointBox");
             const deliveryPriceLabel = document.getElementById("deliveryPriceLabel");
             const grandTotalLabel = document.getElementById("grandTotalLabel");
-
             const subtotal = @subtotal.ToString(System.Globalization.CultureInfo.InvariantCulture);
-
-            const prices = {
-                "InPostLocker": 14.99,
-                "InPostCourier": 16.99,
-                "DpdCourier": 18.99,
-                "OrlenPaczka": 12.99,
-                "LocalPickup": 0.00
-            };
 
             function formatPln(value) {
                 return new Intl.NumberFormat("pl-PL", {
@@ -221,15 +195,10 @@
 
             function updateUi() {
                 const selected = document.querySelector(".shipping-method:checked");
-                const method = selected ? selected.value : null;
-                const deliveryPrice = method && prices[method] !== undefined ? prices[method] : 0;
+                const deliveryPrice = selected ? parseFloat(selected.dataset.price) : 0;
+                const requiresPoint = selected ? selected.dataset.requiresPoint === "true" : false;
 
-                if (method === "InPostLocker" || method === "OrlenPaczka") {
-                    pickupPointBox.style.display = "block";
-                } else {
-                    pickupPointBox.style.display = "none";
-                }
-
+                pickupPointBox.style.display = requiresPoint ? "block" : "none";
                 deliveryPriceLabel.textContent = formatPln(deliveryPrice);
                 grandTotalLabel.textContent = formatPln(Number(subtotal) + deliveryPrice);
             }

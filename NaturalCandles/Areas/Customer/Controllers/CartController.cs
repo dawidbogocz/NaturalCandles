@@ -1,10 +1,13 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NaturalCandles.DataAccess.Repository.IRepository;
+using NaturalCandles.DataAccess.Services;
+using NaturalCandles.DataAccess.Services.IServices;
 using NaturalCandles.Models;
 using NaturalCandles.Models.Enums;
 using NaturalCandles.Models.ViewModels;
 using NaturalCandles.Utility;
+using NaturalCandles.Utility.Services;
 using System.Security.Claims;
 
 namespace NaturalCandles.Areas.Customer.Controllers
@@ -14,13 +17,20 @@ namespace NaturalCandles.Areas.Customer.Controllers
     public class CartController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ICheckoutService _checkoutService;
+        private readonly IPaymentGatewayService _paymentGatewayService;
 
         [BindProperty]
-        public ShoppingCartVM ShoppingCartVM { get; set; }
+        public ShoppingCartVM ShoppingCartVM { get; set; } = new();
 
-        public CartController(IUnitOfWork unitOfWork)
+        public CartController(
+            IUnitOfWork unitOfWork,
+            ICheckoutService checkoutService,
+            IPaymentGatewayService paymentGatewayService)
         {
             _unitOfWork = unitOfWork;
+            _checkoutService = checkoutService;
+            _paymentGatewayService = paymentGatewayService;
         }
 
         public IActionResult Index()
@@ -47,6 +57,7 @@ namespace NaturalCandles.Areas.Customer.Controllers
             ShoppingCartVM.OrderHeader.City = applicationUser.City;
             ShoppingCartVM.OrderHeader.State = applicationUser.State;
             ShoppingCartVM.OrderHeader.PostalCode = applicationUser.PostalCode;
+            ShoppingCartVM.OrderHeader.EmailAddress = applicationUser.Email;
 
             return View(ShoppingCartVM);
         }
@@ -54,9 +65,12 @@ namespace NaturalCandles.Areas.Customer.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [ActionName("Summary")]
-        public IActionResult SummaryPOST()
+        public async Task<IActionResult> SummaryPOST(ShoppingCartVM input)
         {
             var userId = GetCurrentUserId();
+
+            ShoppingCartVM = BuildShoppingCartVm(userId);
+            ShoppingCartVM.OrderHeader = input.OrderHeader ?? new OrderHeader();
 
             ShoppingCartVM.ShoppingCartList = _unitOfWork.ShoppingCart.GetAll(
                 u => u.ApplicationUserId == userId,
@@ -68,9 +82,6 @@ namespace NaturalCandles.Areas.Customer.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            var applicationUser = _unitOfWork.ApplicationUser.Get(u => u.Id == userId);
-            if (applicationUser == null) return NotFound();
-
             decimal productsTotal = 0m;
 
             foreach (var cart in ShoppingCartVM.ShoppingCartList)
@@ -79,54 +90,80 @@ namespace NaturalCandles.Areas.Customer.Controllers
                 productsTotal += cart.Price * cart.Count;
             }
 
-            if (ShoppingCartVM.OrderHeader.ShippingMethod == null)
-                ModelState.AddModelError("OrderHeader.ShippingMethod", "Select a delivery method.");
+            var wrapper = new MvcModelStateWrapper(ModelState);
+            _checkoutService.ValidateDeliveryAndPayment(ShoppingCartVM.OrderHeader, wrapper);
 
-            if (ShoppingCartVM.OrderHeader.PaymentMethod == null)
-                ModelState.AddModelError("OrderHeader.PaymentMethod", "Select a payment method.");
+            ShoppingCartVM.OrderHeader.DeliveryPrice =
+                _checkoutService.GetShippingPrice(ShoppingCartVM.OrderHeader.ShippingMethod);
 
-            if (RequiresPickupPoint(ShoppingCartVM.OrderHeader.ShippingMethod) &&
-                string.IsNullOrWhiteSpace(ShoppingCartVM.OrderHeader.DeliveryPointId))
-            {
-                ModelState.AddModelError("OrderHeader.DeliveryPointId", "Select or enter a pickup point.");
-            }
+            ShoppingCartVM.OrderHeader.OrderTotal =
+                productsTotal + ShoppingCartVM.OrderHeader.DeliveryPrice;
 
             if (!ModelState.IsValid)
             {
-                ShoppingCartVM.OrderHeader.DeliveryPrice = CalculateDeliveryPrice(ShoppingCartVM.OrderHeader.ShippingMethod);
-                ShoppingCartVM.OrderHeader.OrderTotal = productsTotal + ShoppingCartVM.OrderHeader.DeliveryPrice;
                 return View("Summary", ShoppingCartVM);
             }
 
             ShoppingCartVM.OrderHeader.ApplicationUserId = userId;
             ShoppingCartVM.OrderHeader.OrderDate = DateTime.UtcNow;
-            ShoppingCartVM.OrderHeader.DeliveryPrice = CalculateDeliveryPrice(ShoppingCartVM.OrderHeader.ShippingMethod);
-            ShoppingCartVM.OrderHeader.OrderTotal = productsTotal + ShoppingCartVM.OrderHeader.DeliveryPrice;
+            ShoppingCartVM.OrderHeader.Currency = "PLN";
             ShoppingCartVM.OrderHeader.OrderStatus = SD.StatusPending;
             ShoppingCartVM.OrderHeader.PaymentStatus = SD.PaymentStatusPending;
-            ShoppingCartVM.OrderHeader.Currency = "PLN";
 
             _unitOfWork.OrderHeader.Add(ShoppingCartVM.OrderHeader);
             _unitOfWork.Save();
 
+            var details = new List<OrderDetail>();
             foreach (var cart in ShoppingCartVM.ShoppingCartList)
             {
-                _unitOfWork.OrderDetail.Add(new OrderDetail
+                var detail = new OrderDetail
                 {
                     ProductId = cart.ProductId,
                     OrderHeaderId = ShoppingCartVM.OrderHeader.Id,
                     Price = cart.Price,
                     Count = cart.Count
-                });
+                };
+
+                details.Add(detail);
+                _unitOfWork.OrderDetail.Add(detail);
+            }
+
+            _unitOfWork.Save();
+
+            if (ShoppingCartVM.OrderHeader.PaymentMethod == PaymentMethod.Przelewy24 ||
+                ShoppingCartVM.OrderHeader.PaymentMethod == PaymentMethod.Blik ||
+                ShoppingCartVM.OrderHeader.PaymentMethod == PaymentMethod.Card)
+            {
+                var paymentResult = await _paymentGatewayService.StartPaymentAsync(
+                    ShoppingCartVM.OrderHeader,
+                    details);
+
+                if (!paymentResult.Success)
+                {
+                    TempData["error"] = paymentResult.ErrorMessage ?? "Unable to start payment.";
+                    return View("Summary", ShoppingCartVM);
+                }
+
+                ShoppingCartVM.OrderHeader.SessionId = paymentResult.ExternalSessionId;
+                _unitOfWork.OrderHeader.Update(ShoppingCartVM.OrderHeader);
+                _unitOfWork.Save();
+
+                return Redirect(paymentResult.RedirectUrl!);
             }
 
             _unitOfWork.ShoppingCart.RemoveRange(ShoppingCartVM.ShoppingCartList);
             _unitOfWork.Save();
-
             HttpContext.Session.SetInt32(SD.SessionCart, 0);
-            TempData["success"] = $"Order #{ShoppingCartVM.OrderHeader.Id} created successfully.";
 
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Confirmation), new { orderId = ShoppingCartVM.OrderHeader.Id });
+        }
+
+        public IActionResult Confirmation(int orderId)
+        {
+            var order = _unitOfWork.OrderHeader.Get(u => u.Id == orderId);
+            if (order == null) return NotFound();
+
+            return View(order);
         }
 
         [HttpPost]
@@ -139,7 +176,11 @@ namespace NaturalCandles.Areas.Customer.Controllers
                 u => u.Id == cartId && u.ApplicationUserId == userId,
                 tracked: true);
 
-            if (cartFromDb == null) return NotFound();
+            if (cartFromDb == null)
+            {
+                TempData["error"] = "Cart item not found.";
+                return RedirectToAction(nameof(Index));
+            }
 
             cartFromDb.Count += 1;
             _unitOfWork.ShoppingCart.Update(cartFromDb);
@@ -161,7 +202,11 @@ namespace NaturalCandles.Areas.Customer.Controllers
                 u => u.Id == cartId && u.ApplicationUserId == userId,
                 tracked: true);
 
-            if (cartFromDb == null) return NotFound();
+            if (cartFromDb == null)
+            {
+                TempData["error"] = "Cart item not found.";
+                return RedirectToAction(nameof(Index));
+            }
 
             if (cartFromDb.Count <= 1)
             {
@@ -189,7 +234,11 @@ namespace NaturalCandles.Areas.Customer.Controllers
                 u => u.Id == cartId && u.ApplicationUserId == userId,
                 tracked: true);
 
-            if (cartFromDb == null) return NotFound();
+            if (cartFromDb == null)
+            {
+                TempData["error"] = "Cart item not found.";
+                return RedirectToAction(nameof(Index));
+            }
 
             _unitOfWork.ShoppingCart.Remove(cartFromDb);
             _unitOfWork.Save();
@@ -206,7 +255,8 @@ namespace NaturalCandles.Areas.Customer.Controllers
                 ShoppingCartList = _unitOfWork.ShoppingCart.GetAll(
                     u => u.ApplicationUserId == userId,
                     includeProperties: "Product,Product.PriceTiers"),
-                OrderHeader = new OrderHeader()
+                OrderHeader = new OrderHeader(),
+                ShippingMethodSettings = _checkoutService.GetEnabledShippingMethods()
             };
 
             decimal productsTotal = 0m;
@@ -229,27 +279,11 @@ namespace NaturalCandles.Areas.Customer.Controllers
 
         private void RefreshCartSession(string userId)
         {
-            var cartCount = _unitOfWork.ShoppingCart.GetAll(u => u.ApplicationUserId == userId).Count();
+            var cartCount = _unitOfWork.ShoppingCart
+                .GetAll(u => u.ApplicationUserId == userId)
+                .Count();
+
             HttpContext.Session.SetInt32(SD.SessionCart, cartCount);
-        }
-
-        private static bool RequiresPickupPoint(ShippingMethod? shippingMethod)
-        {
-            return shippingMethod == ShippingMethod.InPostLocker ||
-                   shippingMethod == ShippingMethod.OrlenPaczka;
-        }
-
-        private static decimal CalculateDeliveryPrice(ShippingMethod? shippingMethod)
-        {
-            return shippingMethod switch
-            {
-                ShippingMethod.InPostLocker => 14.99m,
-                ShippingMethod.InPostCourier => 16.99m,
-                ShippingMethod.DpdCourier => 18.99m,
-                ShippingMethod.OrlenPaczka => 12.99m,
-                ShippingMethod.LocalPickup => 0m,
-                _ => 0m
-            };
         }
 
         private decimal GetPriceBasedOnQuantity(ShoppingCart shoppingCart)
@@ -264,7 +298,9 @@ namespace NaturalCandles.Areas.Customer.Controllers
                 return matchedTier?.Price ?? tiers.OrderBy(x => x.MinQuantity).First().Price;
             }
 
-            // Backward compatibility for older products not yet migrated to dynamic tiers
+            if (shoppingCart.Product == null)
+                return 0m;
+
             if (shoppingCart.Count >= 10 && shoppingCart.Product.Price10 > 0)
                 return shoppingCart.Product.Price10;
 

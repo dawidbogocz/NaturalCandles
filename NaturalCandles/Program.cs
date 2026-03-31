@@ -1,12 +1,15 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using NaturalCandles.DataAccess.Data;
-using Microsoft.AspNetCore.Identity;
 using NaturalCandles.DataAccess.Repository;
 using NaturalCandles.DataAccess.Repository.IRepository;
-using System.Text.Json.Serialization;
-using NaturalCandles.Utility;
-using Microsoft.AspNetCore.Identity.UI.Services;
+using NaturalCandles.DataAccess.Services;
+using NaturalCandles.DataAccess.Services.IServices;
 using NaturalCandles.Models;
+using NaturalCandles.Utility;
+using NaturalCandles.Utility.Services;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -90,6 +93,12 @@ builder.Services.AddSession(options =>
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IEmailSender, EmailSender>();
+
+builder.Services.AddScoped<ICheckoutService, CheckoutService>();
+builder.Services.AddHttpClient();
+builder.Services.Configure<Przelewy24Options>(
+    builder.Configuration.GetSection("Przelewy24"));
+builder.Services.AddScoped<IPaymentGatewayService, Przelewy24PaymentGatewayService>();
 
 var app = builder.Build();
 

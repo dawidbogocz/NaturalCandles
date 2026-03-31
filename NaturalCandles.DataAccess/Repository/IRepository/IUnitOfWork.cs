@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NaturalCandles.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,6 +15,7 @@ namespace NaturalCandles.DataAccess.Repository.IRepository
         IApplicationUserRepository ApplicationUser { get; }
         IOrderHeaderRepository OrderHeader { get; }
         IOrderDetailRepository OrderDetail { get; }
+        IRepository<ShippingMethodSetting> ShippingMethodSetting { get; }
 
         void Save();
 	}

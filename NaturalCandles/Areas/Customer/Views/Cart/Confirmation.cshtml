@@ -1,0 +1,59 @@
+﻿@model OrderHeader
+@using System.Globalization
+
+@{
+    var culture = new CultureInfo("pl-PL");
+}
+
+<div class="container py-5">
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-5">
+            <h2 class="mb-3">Thank you for your order</h2>
+
+            @if (Model.PaymentStatus == SD.PaymentStatusApproved)
+            {
+                <p class="text-success">Your payment was confirmed and the order is being processed.</p>
+            }
+            else if (Model.PaymentMethod == NaturalCandles.Models.Enums.PaymentMethod.BankTransfer ||
+                     Model.PaymentMethod == NaturalCandles.Models.Enums.PaymentMethod.CashOnDelivery)
+            {
+                <p class="text-muted">Your order was created. Payment will be completed offline or on delivery.</p>
+            }
+            else
+            {
+                <p class="text-warning">Your order was created, but payment is still pending.</p>
+            }
+
+            <div class="row g-3 mt-4">
+                <div class="col-md-6">
+                    <div class="fw-semibold">Order number</div>
+                    <div>#@Model.Id</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="fw-semibold">Payment status</div>
+                    <div>@Model.PaymentStatus</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="fw-semibold">Delivery method</div>
+                    <div>@Model.ShippingMethod</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="fw-semibold">Total</div>
+                    <div>@Model.OrderTotal.ToString("c", culture)</div>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(Model.DeliveryPointId))
+                {
+                    <div class="col-12">
+                        <div class="fw-semibold">Pickup point</div>
+                        <div>@Model.DeliveryPointId @Model.DeliveryPointName</div>
+                    </div>
+                }
+            </div>
+
+            <a asp-area="Customer" asp-controller="Home" asp-action="Index" class="btn btn-dark mt-4">
+                Back to shop
+            </a>
+        </div>
+    </div>
+</div>

@@ -10,6 +10,7 @@ namespace NaturalCandles.Models.ViewModels
     {
         public IEnumerable<ShoppingCart> ShoppingCartList { get; set; }
         public OrderHeader OrderHeader { get; set; }
+        public IEnumerable<ShippingMethodSetting> ShippingMethodSettings { get; set; } = Enumerable.Empty<ShippingMethodSetting>();
 
     }
 }
